@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Problem - Bug Buster{% endblock %}
+
+{% block content %}
+<div class="register-card glass-panel" style="max-width: 900px;">
+    <h2>Upload Buggy Code Problem</h2>
+    <p class="subtitle">Provide the buggy code versions for C and Python</p>
+
+    <form method="post" class="auth-form">
+        {% csrf_token %}
+        <div class="grid-2-col" style="gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label>Problem Title</label>
+                <input type="text" name="title" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label>Select Round</label>
+                <select name="round_id" class="form-input" required>
+                    {% for round in rounds %}
+                    <option value="{{ round.id }}">{{ round.name }} ({{ round.difficulty }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Problem Description</label>
+            <textarea name="description" class="form-input" rows="3" required></textarea>
+        </div>
+
+        <div class="grid-2-col" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <h4
+                    style="color: var(--primary-color); margin-bottom: 0.5rem; text-shadow: 0 0 5px var(--primary-color);">
+                    C Language (Buggy Code)</h4>
+                <textarea name="buggy_c" class="form-input" rows="15" style="font-family: monospace;"
+                    required></textarea>
+            </div>
+            <div>
+                <h4
+                    style="color: var(--accent-color); margin-bottom: 0.5rem; text-shadow: 0 0 5px var(--accent-color);">
+                    Python Language (Buggy Code)</h4>
+                <textarea name="buggy_python" class="form-input" rows="15" style="font-family: monospace;"
+                    required></textarea>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary" style="padding: 0.8rem 2rem;">Upload Problem</button>
+            <a href="{% url 'coordinator_dashboard' %}" class="btn btn-outline" style="margin-left: 1rem;">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

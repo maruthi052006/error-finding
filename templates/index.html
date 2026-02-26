@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Welcome to Bug Buster - INSIGHTOPIA'26{% endblock %}
+
+{% block content %}
+<div style="text-align: center; max-width: 800px; margin: 4rem auto;">
+    <h1
+        style="font-size: 3.5rem; margin-bottom: 0.5rem; background: -webkit-linear-gradient(45deg, var(--primary-color), var(--accent-color)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">
+        BUG BUSTER</h1>
+    <h2 style="font-size: 1.5rem; color: var(--text-secondary); margin-bottom: 0.5rem;">ARTIFICIAL INTELLIGENCE AND DATA
+        SCIENCE</h2>
+    <h3 style="font-size: 1.2rem; margin-bottom: 3rem;">A flagship event of <strong
+            style="color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5);">INSIGHTOPIA'26</strong></h3>
+
+    <div class="glass-panel" style="padding: 2.5rem; text-align: left; margin-bottom: 3rem;">
+        <h2
+            style="margin-bottom: 1.5rem; color: var(--primary-color); border-bottom: 1px solid var(--glass-border); padding-bottom: 0.8rem; font-size: 1.6rem;">
+            Rules & Regulations</h2>
+        <ul style="list-style-type: none; padding: 0;">
+            <li style="margin-bottom: 1.2rem; position: relative; padding-left: 2rem;">
+                <span style="position: absolute; left: 0; color: var(--accent-color); font-size: 1.2rem;">▹</span>
+                <strong>Team Registration:</strong> Each team must consist of 1 or 2 members. Register your team before
+                the event begins.
+            </li>
+            <li style="margin-bottom: 1.2rem; position: relative; padding-left: 2rem;">
+                <span style="position: absolute; left: 0; color: var(--accent-color); font-size: 1.2rem;">▹</span>
+                <strong>Language Choice:</strong> Teams must select either C or Python. Once a language is chosen for a
+                round, it cannot be changed.
+            </li>
+            <li style="margin-bottom: 1.2rem; position: relative; padding-left: 2rem;">
+                <span style="position: absolute; left: 0; color: var(--accent-color); font-size: 1.2rem;">▹</span>
+                <strong>Time Limits:</strong> A global timer runs for the entire round. All assigned problems must be
+                completed before the time expires.
+            </li>
+            <li style="margin-bottom: 1.2rem; position: relative; padding-left: 2rem;">
+                <span style="position: absolute; left: 0; color: var(--accent-color); font-size: 1.2rem;">▹</span>
+                <strong>Anti-Malpractice Strict Policy:</strong>
+                <ul
+                    style="list-style-type: disc; padding-left: 1.5rem; margin-top: 0.8rem; color: var(--text-secondary); line-height: 1.6;">
+                    <li>Copy/Paste (Ctrl+C/V) and Right-Click context menus are strictly disabled in the editor.</li>
+                    <li>Switching tabs or moving focus away from the browser window will be logged securely.</li>
+                    <li><strong style="color: var(--danger-color);">3 tab switches</strong> will result in an immediate
+                        automatic disqualification and zero score for the round.</li>
+                </ul>
+            </li>
+            <li style="margin-bottom: 1.2rem; position: relative; padding-left: 2rem;">
+                <span style="position: absolute; left: 0; color: var(--accent-color); font-size: 1.2rem;">▹</span>
+                <strong>Evaluation System:</strong> You will be scored based on the exact correctness of your output
+                matching the required expected result. Time taken is recorded carefully and acts as a tie-breaker on the
+                live leaderboard.
+            </li>
+        </ul>
+    </div>
+
+    {% if not user.is_authenticated %}
+    <div style="display: flex; gap: 1.5rem; justify-content: center; margin-top: 2rem;">
+        <a href="{% url 'register' %}" class="btn btn-primary"
+            style="font-size: 1.1rem; padding: 1rem 2.5rem; box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);">Register Team
+            Now</a>
+        <a href="{% url 'login' %}" class="btn btn-outline" style="font-size: 1.1rem; padding: 1rem 2.5rem;">Login
+            Portal</a>
+    </div>
+    {% else %}
+    <div style="margin-top: 2rem;">
+        <a href="{% url 'login' %}" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2.5rem;">Enter
+            Dashboard</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Register Team - Bug Buster{% endblock %}
+
+{% block content %}
+<div class="register-card glass-panel">
+    <h2>Team Registration</h2>
+    <p class="subtitle">Register your team for BUG BUSTER</p>
+
+    <form method="post" class="auth-form">
+        {% csrf_token %}
+
+        <div class="form-section">
+            <h3>Account Details</h3>
+            {% for field in form %}
+            {% if field.name == 'username' or field.name == 'password' or field.name == 'password_confirm' %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="field-error">{{ field.errors }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="form-section">
+            <h3>Team Details</h3>
+            {% for field in form %}
+            {% if field.name == 'team_name' %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="field-error">{{ field.errors }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="team-members">
+            <div class="member-box glass-panel">
+                <h4>Member 1 (Leader)</h4>
+                {% for field in form %}
+                {% if field.name == 'member1_name' or field.name == 'member1_email' or field.name == 'member1_roll' %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="member-box glass-panel">
+                <h4>Member 2 (Optional)</h4>
+                {% for field in form %}
+                {% if field.name == 'member2_name' or field.name == 'member2_email' or field.name == 'member2_roll' %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-error">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary btn-block">Register Team</button>
+    </form>
+</div>
+{% endblock %}

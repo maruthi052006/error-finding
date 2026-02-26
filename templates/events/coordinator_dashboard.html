@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Coordinator Dashboard - Bug Buster{% endblock %}
+
+{% block content %}
+<div style="width: 100%; max-width: 1200px;">
+    <h2>Coordinator Dashboard</h2>
+    <div class="glass-panel" style="padding: 1.5rem; margin-top: 1rem; display: flex; justify-content: space-between;">
+        <div>
+            <h3>Total Teams Registered: {{ teams_count }}</h3>
+        </div>
+        <div>
+            <a href="{% url 'upload_problem' %}" class="btn btn-primary">Upload New Problem</a>
+            <a href="{% url 'analytics' %}" class="btn btn-outline" style="margin-left: 0.5rem;">View Live Analytics</a>
+        </div>
+    </div>
+
+    <div class="grid-2-col" style="gap: 2rem; margin-top: 2rem;">
+        <!-- ROUNDS -->
+        <div class="glass-panel" style="padding: 2rem;">
+            <h3>Manage Rounds</h3>
+            <hr style="border-color: var(--glass-border); margin: 1rem 0;">
+            <form method="post" class="auth-form" style="margin-bottom: 2rem;">
+                {% csrf_token %}
+                <input type="hidden" name="create_round" value="1">
+                <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
+                    <input type="text" name="name" class="form-input" placeholder="Round Name (e.g. Round 1)" required
+                        style="flex: 1; min-width: 200px;">
+                    <select name="difficulty" class="form-input" required style="flex: 1; min-width: 150px;">
+                        <option value="Easy">Easy</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+                    <input type="number" name="duration_minutes" class="form-input" placeholder="Duration (min)"
+                        value="15" required style="flex: 1; min-width: 120px;">
+                    <button type="submit" class="btn btn-primary" style="white-space: nowrap;">Create</button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table style="width: 100%; min-width: 600px;">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Difficulty</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for round in rounds %}
+                        <tr>
+                            <td>{{ round.name }}</td>
+                            <td>{{ round.difficulty }}</td>
+                            <td>{{ round.duration_minutes }} min</td>
+                            <td>
+                                {% if round.is_active %}
+                                <span style="color: var(--accent-color); font-weight: 600;">Active</span>
+                                {% else %}
+                                <span style="color: var(--text-secondary);">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="toggle_round" value="1">
+                                    <input type="hidden" name="round_id" value="{{ round.id }}">
+                                    {% if round.is_active %}
+                                    <button class="btn btn-outline"
+                                        style="padding: 0.3rem 0.6rem; color: var(--danger-color); border-color: var(--danger-color);">Deactivate</button>
+                                    {% else %}
+                                    <button class="btn btn-primary" style="padding: 0.3rem 0.6rem;">Activate</button>
+                                    {% endif %}
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align: center;">No rounds created yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PROBLEMS -->
+        <div class="glass-panel" style="padding: 2rem;">
+            <h3>Problems Created</h3>
+            <hr style="border-color: var(--glass-border); margin: 1rem 0;">
+            <div class="table-responsive">
+                <table style="width: 100%; min-width: 500px;">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Round</th>
+                            <th>Has C Code</th>
+                            <th>Has Py Code</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for problem in problems %}
+                        <tr>
+                            <td>{{ problem.title }}</td>
+                            <td>{{ problem.round.name }}</td>
+                            <td>{% if problem.buggy_code_c %}✅{% else %}❌{% endif %}</td>
+                            <td>{% if problem.buggy_code_python %}✅{% else %}❌{% endif %}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" style="text-align: center;">No problems uploaded yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

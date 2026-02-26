@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+{% block title %}Bug Buster Compiler{% endblock %}
+
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.js"></script>
+<style>
+    body {
+        overflow: hidden;
+    }
+
+    .navbar,
+    footer,
+    main.container {
+        display: none !important;
+    }
+
+    .split-container {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: var(--bg-color);
+        z-index: 1000;
+    }
+
+    .main-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .header-bar {
+        height: 60px;
+        background: rgba(8, 12, 18, 0.85);
+        backdrop-filter: blur(10px);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 1.5rem;
+        border-bottom: 1px solid var(--glass-border);
+        box-shadow: 0 2px 15px rgba(0, 240, 255, 0.1);
+        z-index: 10;
+    }
+
+    #editor {
+        flex: 1;
+    }
+
+    .side-panel {
+        width: 400px;
+        background: rgba(10, 15, 25, 0.9);
+        border-left: 1px solid var(--glass-border);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .panel-header {
+        height: 60px;
+        display: flex;
+        align-items: center;
+        padding: 0 1rem;
+        font-weight: 700;
+        border-bottom: 1px solid var(--glass-border);
+        background: rgba(8, 12, 18, 0.95);
+        color: var(--primary-color);
+        box-shadow: 0 2px 5px rgba(0, 240, 255, 0.05);
+    }
+
+    .panel-content {
+        padding: 1.2rem;
+        flex: 1;
+        overflow-y: auto;
+        color: var(--text-primary);
+        font-family: 'Consolas', 'Courier New', monospace;
+        font-size: 0.95rem;
+        white-space: pre-wrap;
+    }
+
+    .problem-desc {
+        padding: 1.5rem;
+        background: transparent;
+        border-bottom: 1px solid var(--glass-border);
+        font-family: 'Outfit', sans-serif;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}{% endblock %}
+
+{% block scripts %}
+<div id="fs-overlay"
+    style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(8, 12, 18, 0.95);z-index:9999;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+    <h2 style="color:var(--danger-color);font-size: 2.5rem;margin-bottom: 2rem;">Compiler Requires Full Screen Mode</h2>
+    <p style="color:var(--text-secondary);font-size: 1.2rem;margin-bottom: 3rem;">Please enter full screen mode to
+        start/continue coding.</p>
+    <button class="btn btn-primary" id="enter-fs-btn" style="font-size: 1.5rem; padding: 1rem 3rem;">Enter Full
+        Screen</button>
+</div>
+
+<div class="split-container">
+    <div class="main-area">
+        <div class="header-bar">
+            <div style="font-weight: bold; color: var(--primary-color);">BUG BUSTER - {{ round.name }}</div>
+            <div style="display: flex; align-items: center; gap: 2rem;">
+                <div style="font-size: 1.2rem; font-weight: bold; font-variant-numeric: tabular-nums;" id="timer">
+                    00:00
+                </div>
+                <button class="btn btn-outline" id="run-btn">Run Code</button>
+                <button class="btn btn-primary" id="submit-btn" style="background-color: var(--accent-color);">Submit
+                    Answer</button>
+            </div>
+        </div>
+        <div id="editor"></div>
+    </div>
+    <div class="side-panel">
+        <div class="panel-header" style="flex: 0 0 auto; justify-content: space-between;">
+            <span>Problem Navigator</span>
+        </div>
+        <div
+            style="padding: 1rem; background-color: rgba(0,0,0,0.2); border-bottom: 1px solid var(--glass-border); display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            {% for p_data in assigned_problems_data %}
+            <a href="{% url 'compiler_view' p_data.problem.id %}"
+                class="btn {% if p_data.problem.id == problem.id %}btn-primary{% else %}btn-outline{% endif %} {% if p_data.is_solved and p_data.problem.id != problem.id %}btn-solved{% endif %} nav-btn"
+                style="padding: 0.4rem 0.8rem; font-size: 0.85rem; flex: 1; text-align: center;">
+                Q{{ forloop.counter }} {% if p_data.is_solved %}✅{% endif %}
+            </a>
+            {% endfor %}
+        </div>
+
+        <div class="problem-desc" style="flex: 0 0 auto;">
+            <strong style="color:var(--primary-color)">{{ problem.title }}</strong><br>
+            {{ problem.description }}
+        </div>
+        <div class="panel-header" style="flex: 0 0 auto;">Expected Output</div>
+        <div class="panel-content"
+            style="background-color: rgba(0,240,255,0.05); max-height: 200px; flex: 0 0 auto; border-bottom: 1px solid var(--glass-border); border-left: 4px solid var(--accent-color);">
+            {{ problem.expected_output|default:"(None specified)" }}</div>
+
+        <div class="panel-header" style="flex: 0 0 auto;">Execution Output</div>
+        <div class="panel-content" id="output-panel" style="flex: 1 1 auto; background-color: rgba(0,0,0,0.3);">Press
+            'Run Code'
+            to execute.</div>
+    </div>
+</div>
+
+<script>
+    const subId = Number("{{ submission.id }}");
+    const languageStr = "{{ participation.language }}";
+    const monacoLang = languageStr === 'Python' ? 'python' : 'c';
+    const isSubmitted = "{{ is_submitted }}" === "True";
+    const roundId = "{{ round.id }}";
+    const storageKey = `tabSwitches_round_${roundId}`;
+    let tabSwitches = parseInt(sessionStorage.getItem(storageKey) || "0");
+    let isNavigating = false;
+    let lastSwitchTime = 0;
+
+    const fsOverlay = document.getElementById('fs-overlay');
+    const enterFsBtn = document.getElementById('enter-fs-btn');
+    const fsStorageKey = `fs_requested_round_${roundId}`;
+    let hasRequestedFs = sessionStorage.getItem(fsStorageKey) === "true";
+
+    function checkFullScreen(isInitial = false) {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            if (isInitial && hasRequestedFs) {
+                fsOverlay.style.display = 'none';
+            } else {
+                fsOverlay.style.display = 'flex';
+            }
+        } else {
+            fsOverlay.style.display = 'none';
+        }
+    }
+
+    enterFsBtn.addEventListener('click', () => {
+        sessionStorage.setItem(fsStorageKey, "true");
+        hasRequestedFs = true;
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(err => console.log(err));
+        } else if (elem.webkitRequestFullscreen) { /* Safari */
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { /* IE11 */
+            elem.msRequestFullscreen();
+        }
+    });
+
+    function handleMalpractice(reason) {
+        if (isNavigating) return;
+        const now = Date.now();
+        if (now - lastSwitchTime < 1000) return; // Prevent double trigger within 1 sec
+        lastSwitchTime = now;
+
+        tabSwitches++;
+        sessionStorage.setItem(storageKey, tabSwitches);
+
+        if (tabSwitches >= 3) {
+            executeCode(true); // Terminate
+        } else {
+            alert(`Warning! ${reason} detected. (${tabSwitches}/3)`);
+        }
+    }
+
+    window.addEventListener('beforeunload', () => {
+        // Prevent natural navigation from counting as a tab switch
+        isNavigating = true;
+
+        if (!isSubmitted) {
+            try {
+                if (typeof editorInstance !== 'undefined' && editorInstance) {
+                    const draftCode = editorInstance.getValue();
+                    if (draftCode) {
+                        fetch("{% url 'save_code' %}", {
+                            method: 'POST',
+                            keepalive: true,
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({
+                                code: draftCode,
+                                submission_id: subId
+                            })
+                        }).catch(e => console.error("Auto-save keepalive failed", e));
+                    }
+                }
+            } catch (err) {
+                console.error("Auto-save failed", err);
+            }
+        }
+    });
+
+    // Timer Logic
+    let timeLeft = Number("{{ time_left }}");
+    const timerEl = document.getElementById('timer');
+
+    function updateTimer() {
+        if (timeLeft <= 0) {
+            timerEl.textContent = "00:00";
+            clearInterval(timerInt);
+            executeCode(true); // auto submit
+            return;
+        }
+
+        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const s = (timeLeft % 60).toString().padStart(2, '0');
+        timerEl.textContent = `${m}:${s}`;
+
+        if (timeLeft <= 300) timerEl.style.color = 'var(--danger-color)';
+        timeLeft--;
+    }
+    const timerInt = setInterval(updateTimer, 1000);
+    updateTimer(); // initial call
+
+    // Anti Malpractice
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+            handleMalpractice("Tab switch");
+        }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+        checkFullScreen(false);
+        if (!document.fullscreenElement && document.visibilityState !== "hidden") {
+            handleMalpractice("Full screen exit");
+        }
+    });
+
+    // Initial check
+    checkFullScreen(true);
+
+    // Disable events
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    window.addEventListener('keydown', e => {
+        if (e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'x')) e.preventDefault();
+    });
+
+    // Monaco Setup
+    let editorInstance;
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' } });
+    require(['vs/editor/editor.main'], function () {
+        let codeContent = `{{ buggy_code|escapejs }}`;
+        editorInstance = monaco.editor.create(document.getElementById('editor'), {
+            value: codeContent,
+            language: monacoLang,
+            theme: 'vs-dark',
+            fontSize: 15,
+            minimap: { enabled: false },
+            automaticLayout: true,
+            padding: { top: 16 },
+            readOnly: isSubmitted
+        });
+    });
+
+    if (isSubmitted) {
+        document.getElementById('run-btn').style.display = 'none';
+        document.getElementById('submit-btn').disabled = true;
+        document.getElementById('submit-btn').innerText = "Already Submitted";
+        document.getElementById('output-panel').innerText = "This problem has already been submitted and scored. You cannot edit it further.";
+        document.getElementById('output-panel').style.color = "var(--primary-color)";
+    }
+
+    // Execution Logic
+    async function executeCode(isFinal = false) {
+        document.getElementById('output-panel').innerText = isFinal ? "Submitting..." : "Executing...";
+        if (!isFinal) {
+            document.getElementById('run-btn').disabled = true;
+        } else {
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('run-btn').disabled = true;
+        }
+
+        const code = editorInstance.getValue();
+        const initialTime = Number("{{ round.duration_minutes }}") * 60;
+        const timeTaken = initialTime - timeLeft;
+
+        try {
+            const res = await fetch("{% url 'execute_code' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    code, language: languageStr, submission_id: subId,
+                    tab_switches: tabSwitches, time_taken: timeTaken, is_final: isFinal
+                })
+            });
+            const data = await res.json();
+
+            if (data.error && data.error.includes("Malpractice")) {
+                isNavigating = true;
+                window.location.href = "{% url 'participant_dashboard' %}";
+                return;
+            }
+
+            let outputText = "";
+            let color = "var(--text-primary)";
+            if (data.status === "Accepted") {
+                color = "var(--primary-color)";
+            } else if (data.status === "Wrong Answer") {
+                color = "Orange";
+            } else if (data.status === "Error") {
+                color = "var(--danger-color)";
+            }
+
+            if (data.error) {
+                outputText = `[Status: ${data.status}]\n\n* Error Traces:\n${data.error}`;
+                if (data.output) {
+                    outputText += `\n* Standard Output:\n${data.output}`;
+                }
+            } else {
+                outputText = `[Status: ${data.status}]\n\n${data.output}`;
+            }
+            document.getElementById('output-panel').innerText = outputText;
+            document.getElementById('output-panel').style.color = color;
+
+            if (isFinal) {
+                isNavigating = true;
+                window.location.href = "{% url 'problem_list' round.id %}";
+            }
+        } catch (e) {
+            document.getElementById('output-panel').innerText = "Execution failed.";
+        }
+
+        if (!isFinal) {
+            document.getElementById('run-btn').disabled = false;
+        }
+    }
+
+    document.getElementById('run-btn').addEventListener('click', () => executeCode(false));
+    document.getElementById('submit-btn').addEventListener('click', () => {
+        if (!isSubmitted) {
+            isNavigating = true; // Suspend malpractice checks during confirm dialog
+            if (confirm("Are you sure you want to final submit?")) {
+                executeCode(true);
+            } else {
+                isNavigating = false; // Resume malpractice checks if cancelled
+            }
+        }
+    });
+
+</script>
+{% endblock %}

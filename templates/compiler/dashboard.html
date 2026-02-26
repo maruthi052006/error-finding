@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Participant Dashboard - Bug Buster{% endblock %}
+
+{% block content %}
+<div style="width: 100%; max-width: 900px;">
+    <h2>Participant Dashboard</h2>
+    <p class="subtitle">Welcome, Team {{ team.name }}</p>
+
+    <div class="glass-panel" style="padding: 2rem;">
+        <h3>Available Rounds</h3>
+        <hr style="border-color: var(--glass-border); margin: 1rem 0;">
+
+        {% for round in rounds %}
+        <div
+            style="border: 1px solid var(--glass-border); border-radius: 8px; margin-bottom: 1.5rem; background: rgba(10,15,25,0.6); overflow: hidden; box-shadow: inset 0 0 15px rgba(0,240,255,0.05);">
+            <div
+                style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); border-bottom: 1px solid rgba(0,240,255,0.2);">
+                <div>
+                    <strong style="font-size: 1.3rem; color: var(--primary-color);">{{ round.name }}</strong>
+                    <span style="color: var(--text-secondary); margin-left: 1rem; font-size: 0.95rem;">Difficulty: {{ round.difficulty }} | {{ round.duration_minutes }} min</span>
+                </div>
+
+                {% if round.score_details %}
+                <strong style="font-size: 1.4rem; color: var(--accent-color);">{{ round.score_details.total }} / 25
+                    Marks</strong>
+                {% elif round.id in started_rounds %}
+                <a href="{% url 'problem_list' round.id %}" class="btn btn-primary"
+                    style="background: linear-gradient(135deg,var(--primary-color), var(--primary-hover)); color: #000; box-shadow: 0 0 15px rgba(0,240,255,0.4);">Resume
+                    Round</a>
+                {% else %}
+                <a href="{% url 'language_selection' round.id %}" class="btn btn-primary">Enter Round</a>
+                {% endif %}
+            </div>
+
+            {% if round.score_details %}
+            <div style="padding: 1.5rem; background: rgba(8,12,18,0.7); border-top: 1px solid var(--primary-color);">
+                <h4 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.1rem;">Detailed Score
+                    Evaluation Breakdown</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                    <div
+                        style="background: rgba(0,240,255,0.05); padding: 1rem; border-radius: 6px; text-align: center; border: 1px solid rgba(0,240,255,0.15); box-shadow: inset 0 0 10px rgba(0,240,255,0.02);">
+                        <div
+                            style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">
+                            Time Taken</div>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--text-primary);">{{ round.score_details.time }} <span style="font-size: 0.9rem; color: var(--text-secondary);">/
+                                5</span></div>
+                    </div>
+                    <div
+                        style="background: rgba(0,240,255,0.05); padding: 1rem; border-radius: 6px; text-align: center; border: 1px solid rgba(0,240,255,0.15); box-shadow: inset 0 0 10px rgba(0,240,255,0.02);">
+                        <div
+                            style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">
+                            Errors Fixed</div>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--text-primary);">{{ round.score_details.errors }} <span
+                                style="font-size: 0.9rem; color: var(--text-secondary);">/ 8</span></div>
+                    </div>
+                    <div
+                        style="background: rgba(0,240,255,0.05); padding: 1rem; border-radius: 6px; text-align: center; border: 1px solid rgba(0,240,255,0.15); box-shadow: inset 0 0 10px rgba(0,240,255,0.02);">
+                        <div
+                            style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">
+                            Logical Correctness</div>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--text-primary);">{{ round.score_details.logic }} <span
+                                style="font-size: 0.9rem; color: var(--text-secondary);">/ 5</span></div>
+                    </div>
+                    <div
+                        style="background: rgba(0,240,255,0.05); padding: 1rem; border-radius: 6px; text-align: center; border: 1px solid rgba(0,240,255,0.15); box-shadow: inset 0 0 10px rgba(0,240,255,0.02);">
+                        <div
+                            style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">
+                            Code Structure</div>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--text-primary);">{{ round.score_details.structure }} <span
+                                style="font-size: 0.9rem; color: var(--text-secondary);">/ 5</span></div>
+                    </div>
+                    <div
+                        style="background: rgba(0,240,255,0.05); padding: 1rem; border-radius: 6px; text-align: center; border: 1px solid rgba(0,240,255,0.15); box-shadow: inset 0 0 10px rgba(0,240,255,0.02);">
+                        <div
+                            style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">
+                            Tab Discipline</div>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--text-primary);">{{ round.score_details.tabs }} <span style="font-size: 0.9rem; color: var(--text-secondary);">/
+                                2</span></div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p>No active rounds at the moment. Please wait for the coordinator to start a round.</p>
+        {% endfor %}
+    </div>
+
+    <div class="glass-panel" style="padding: 2rem; margin-top: 2rem;">
+        <h3>Rules & Instructions</h3>
+        <ul style="margin-left: 1.5rem; color: var(--text-secondary); margin-top: 1rem;">
+            <li>Select your preferred language (C or Python) before starting.</li>
+            <li>Once selected, the language cannot be changed for the entire round.</li>
+            <li>You will be presented with buggy code problems. Fix them within the global round time limit.</li>
+            <li>Code is automatically submitted when the timer reaches zero.</li>
+            <li><strong>Anti-Malpractice:</strong> Do not switch tabs. 3 tab switches will terminate your round.</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

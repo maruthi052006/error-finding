@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BUG BUSTER{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="logo">BUG BUSTER</div>
+        <div class="nav-links">
+            {% if user.is_authenticated %}
+            <a href="{% url 'index' %}" class="btn btn-outline" style="border: none; margin-right: 15px;">Home</a>
+            <a href="{% url 'login' %}" class="btn btn-outline" style="border: none; margin-right: 15px;">Dashboard</a>
+            <span class="nav-greeting" style="margin-right: 15px;">Welcome, {{ user.username }}</span>
+            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline">Logout</button>
+            </form>
+            {% else %}
+            <a href="{% url 'index' %}" class="btn btn-outline" style="border: none;">Home</a>
+            <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+            <a href="{% url 'register' %}" class="btn btn-outline">Register Team</a>
+            {% endif %}
+        </div>
+    </nav>
+    <main class="container">
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer
+        style="text-align: center; padding: 3rem 1rem; margin-top: 4rem; border-top: 1px solid var(--glass-border); color: var(--text-secondary); line-height: 1.8; background-color: rgba(8,12,18,0.8); backdrop-filter: blur(12px); box-shadow: 0 -5px 20px rgba(0,240,255,0.05);">
+        <p
+            style="font-size: 1.1rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem; text-shadow: 0 0 8px rgba(255,255,255,0.5);">
+            ARTIFICIAL
+            INTELLIGENCE AND DATA SCIENCE</p>
+        <p
+            style="font-size: 1.05rem; letter-spacing: 2px; color: var(--primary-color); text-shadow: 0 0 10px var(--primary-color);">
+            INSIGHTOPIA'26</p>
+        <div
+            style="margin: 1.5rem auto; width: 80px; height: 3px; background: linear-gradient(90deg, var(--primary-color), var(--accent-color)); border-radius: 2px; box-shadow: 0 0 10px var(--primary-color);">
+        </div>
+        <p style="font-size: 0.95rem;">Developed by <strong
+                style="color: var(--primary-color); text-shadow: 0 0 5px var(--primary-color);">Maruthi vasan K</strong>
+        </p>
+        <p style="font-size: 0.95rem; margin-top: 0.3rem;">Powered by <a href="https://apexatech.in" target="_blank"
+                style="color: var(--accent-color); text-decoration: none; font-weight: 700; text-shadow: 0 0 8px var(--accent-color);">Apexatech</a>
+        </p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

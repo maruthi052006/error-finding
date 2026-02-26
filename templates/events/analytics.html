@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Live Analytics - Bug Buster{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div style="width: 100%; max-width: 1200px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>Live Analytics Dashboard</h2>
+        <div>
+            <a href="?export=csv" class="btn btn-primary"
+                style="margin-right: 1rem; box-shadow: 0 0 15px rgba(0,240,255,0.4);">Export to Excel/CSV</a>
+            <a href="{% url 'coordinator_dashboard' %}" class="btn btn-outline">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="grid-2-col" style="gap: 2rem;">
+        <div class="glass-panel" style="padding: 1.5rem;">
+            <h3>Team Scores</h3>
+            <canvas id="scoresChart"></canvas>
+        </div>
+        <div class="glass-panel" style="padding: 1.5rem;">
+            <h3>Time Taken (Seconds)</h3>
+            <canvas id="timeChart"></canvas>
+        </div>
+    </div>
+
+    <div class="glass-panel" style="padding: 2rem; margin-top: 2rem;">
+        <h3>Leaderboard</h3>
+        <hr style="border-color: var(--glass-border); margin: 1rem 0;">
+        <div class="table-responsive">
+            <table style="width: 100%; min-width: 1000px;">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team</th>
+                        <th>Members</th>
+                        <th>Rounds Attended</th>
+                        <th>Logic (5)</th>
+                        <th>Structure (5)</th>
+                        <th>Time Pts (5)</th>
+                        <th>Tabs Pts (2)</th>
+                        <th>Errors (8)</th>
+                        <th>Total Score (25)</th>
+                        <th>Time (s)</th>
+                        <th>Total Switched</th>
+                        <th>Malpractice</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in analytics_data %}
+                    <tr>
+                        <td style="font-weight: bold;">#{{ forloop.counter }}</td>
+                        <td><strong style="color: var(--primary-color);">{{ row.team }}</strong></td>
+                        <td style="color: var(--text-secondary); font-size: 0.9em;">{{ row.members }}</td>
+                        <td>{{ row.rounds_attended }}</td>
+                        <td>{{ row.score_logic }}</td>
+                        <td>{{ row.score_structure }}</td>
+                        <td>{{ row.score_time_pts }}</td>
+                        <td>{{ row.score_tabs }}</td>
+                        <td>{{ row.score_errors }}</td>
+                        <td style="color: var(--accent-color); font-weight: bold;">{{ row.score }}</td>
+                        <td>{{ row.time }}s</td>
+                        <td>{{ row.switches }}</td>
+                        <td>
+                            {% if row.malpractice %}
+                            <span style="color: var(--danger-color); font-weight: bold;">Detected</span>
+                            {% else %}
+                            <span style="color: var(--text-secondary);">Clean</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="13" style="text-align: center;">No submissions yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const labels = JSON.parse('{{ labels_json|escapejs }}');
+    const scores = JSON.parse('{{ scores_json|escapejs }}');
+    const times = JSON.parse('{{ times_json|escapejs }}');
+
+    Chart.defaults.color = '#e6edf3';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
+
+    // Scores Chart
+    new Chart(document.getElementById('scoresChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total Score',
+                data: scores,
+                backgroundColor: 'rgba(88, 166, 255, 0.6)',
+                borderColor: 'rgba(88, 166, 255, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true, max: 25 } }
+        }
+    });
+
+    // Time Chart
+    new Chart(document.getElementById('timeChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Time Taken (s)',
+                data: times,
+                backgroundColor: 'rgba(218, 54, 51, 0.6)',
+                borderColor: 'rgba(218, 54, 51, 1)',
+                borderWidth: 2,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+</script>
+{% endblock %}
